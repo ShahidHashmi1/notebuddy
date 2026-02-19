@@ -1,193 +1,59 @@
 <div class="canvas"></div>
 
 <div class="workspace" [ngStyle]="themeVars" (contextmenu)="openContextMenu($event, 'app', 'app')">
-  <header class="topbar">
-    <div>
-      <p class="eyebrow">Personal workspace</p>
-      <h1>{{ profileName }}'s Notes</h1>
-    </div>
-
-    <div class="stats">
-      <div>
-        <span>{{ notebookCount }}</span>
-        <small>Notebooks</small>
-      </div>
-      <div>
-        <span>{{ sectionCount }}</span>
-        <small>Sections</small>
-      </div>
-      <div>
-        <span>{{ totalNotes }}</span>
-        <small>Notes</small>
-      </div>
-    </div>
-  </header>
+  <app-workspace-header
+    [profileName]="profileName"
+    [notebookCount]="notebookCount"
+    [sectionCount]="sectionCount"
+    [totalNotes]="totalNotes"
+  />
 
   <main class="pane-grid">
-    <aside class="pane notebooks-pane">
-      <div class="pane-head">
-        <h2>Notebooks</h2>
-        <button type="button" class="action ghost" (click)="addNotebook()">+ New</button>
-      </div>
+    <app-notebooks-pane
+      [notebooks]="notebooks"
+      [selectedNotebookId]="selectedNotebookId"
+      (createNotebook)="addNotebook()"
+      (selectNotebook)="selectNotebook($event)"
+      (renameNotebook)="renameNotebook($event)"
+      (deleteNotebook)="deleteNotebook($event)"
+      (contextMenuRequested)="openContextMenu($event.event, 'notebook', $event.targetId)"
+    />
 
-      <div class="notebook-list">
-        @for (notebook of notebooks; track trackById($index, notebook)) {
-          <article
-            class="notebook-item"
-            [class.active]="selectedNotebookId === notebook.id"
-            (contextmenu)="openContextMenu($event, 'notebook', notebook.id)"
-          >
-            <div class="item-main" (click)="selectNotebook(notebook.id)">
-              <span class="dot" [style.background]="notebook.accent"></span>
+    <app-notes-pane
+      [selectedNotebook]="selectedNotebook"
+      [selectedSectionId]="selectedSectionId"
+      [selectedNoteId]="selectedNoteId"
+      [filteredNotes]="filteredNotes"
+      [searchTerm]="searchTerm"
+      [formatDate]="formatDate"
+      (addSection)="addSection()"
+      (addNote)="addNote()"
+      (selectSection)="selectSection($event)"
+      (renameSection)="renameSection($event)"
+      (deleteSection)="deleteSection($event)"
+      (selectNote)="selectNote($event)"
+      (renameNote)="renameNote($event)"
+      (deleteNote)="deleteNote($event)"
+      (searchTermChange)="searchTerm = $event"
+      (sectionContextMenuRequested)="openContextMenu($event.event, 'section', $event.targetId)"
+      (noteContextMenuRequested)="openContextMenu($event.event, 'note', $event.targetId)"
+    />
 
-              <span>
-                <strong>{{ notebook.title }}</strong>
-                <small>{{ notebook.sections.length }} sections</small>
-              </span>
-            </div>
-
-            <div class="item-actions">
-              <button type="button" class="icon-btn" title="Rename notebook" (click)="renameNotebook(notebook.id)">✎</button>
-              <button type="button" class="icon-btn danger" title="Delete notebook" (click)="deleteNotebook(notebook.id)">🗑</button>
-            </div>
-          </article>
-        }
-      </div>
-    </aside>
-
-    <section class="pane notes-pane">
-      <div class="pane-head">
-        <h2>{{ selectedNotebook?.title || 'Notebook' }}</h2>
-        <div class="action-row">
-          <button type="button" class="action" (click)="addSection()">+ Section</button>
-          <button type="button" class="action" (click)="addNote()">+ Note</button>
-        </div>
-      </div>
-
-      <div class="section-tabs">
-        @for (section of selectedNotebook?.sections ?? []; track trackById($index, section)) {
-          <article
-            class="section-pill"
-            [class.active]="selectedSectionId === section.id"
-            [style.border-color]="selectedSectionId === section.id ? section.color : null"
-            [style.box-shadow]="selectedSectionId === section.id ? 'inset 0 0 0 1px ' + section.color + '33' : null"
-            (contextmenu)="openContextMenu($event, 'section', section.id)"
-          >
-            <div class="section-main" (click)="selectSection(section.id)">
-              <span class="section-color-dot" [style.background]="section.color"></span>
-              {{ section.title }}
-            </div>
-            <div class="item-actions">
-              <button type="button" class="icon-btn" title="Rename section" (click)="renameSection(section.id)">✎</button>
-              <button type="button" class="icon-btn danger" title="Delete section" (click)="deleteSection(section.id)">🗑</button>
-            </div>
-          </article>
-        }
-      </div>
-
-      <label class="search">
-        <input type="text" placeholder="Search this section" [(ngModel)]="searchTerm" />
-      </label>
-
-      <div class="note-list">
-        @for (note of filteredNotes; track trackById($index, note)) {
-          <article
-            class="note-card"
-            [class.active]="selectedNoteId === note.id"
-            [style.border-left-color]="note.color"
-            (contextmenu)="openContextMenu($event, 'note', note.id)"
-          >
-            <div class="item-main" (click)="selectNote(note.id)">
-              <div class="note-card-head">
-                <strong>{{ note.title }}</strong>
-
-                @if (note.favorite) {
-                  <span class="fav">★</span>
-                }
-              </div>
-
-              <p>{{ note.content || 'No content yet' }}</p>
-              <small>Edited {{ formatDate(note.updatedAt) }}</small>
-            </div>
-
-            <div class="item-actions">
-              <button type="button" class="icon-btn" title="Rename note" (click)="renameNote(note.id)">✎</button>
-              <button type="button" class="icon-btn danger" title="Delete note" (click)="deleteNote(note.id)">🗑</button>
-            </div>
-          </article>
-        } @empty {
-          <div class="empty">No notes match your search.</div>
-        }
-      </div>
-    </section>
-
-    <section class="pane editor-pane">
-      @if (selectedNote) {
-        <div class="editor-head" [style.border-left-color]="selectedNote.color">
-          <input
-            type="text"
-            [ngModel]="selectedNote.title"
-            (ngModelChange)="updateSelectedNoteTitle($event)"
-            placeholder="Untitled note"
-          />
-
-          <div class="editor-actions">
-            <button type="button" class="action ghost" (click)="toggleFavorite()">
-              {{ selectedNote.favorite ? 'Unfavorite' : 'Favorite' }}
-            </button>
-            <button type="button" class="action danger" (click)="deleteNote(selectedNote.id)">Delete</button>
-          </div>
-        </div>
-
-        <p class="note-meta">
-          Created {{ formatDate(selectedNote.createdAt) }} • Updated {{ formatDate(selectedNote.updatedAt) }}
-        </p>
-
-        <textarea
-          [ngModel]="selectedNote.content"
-          (ngModelChange)="updateNoteContent($event)"
-          placeholder="Capture thoughts, plans, meeting notes, journaling, or anything you want to remember..."
-        ></textarea>
-      } @else {
-        <div class="empty editor-empty">Select or create a note to start writing.</div>
-      }
-    </section>
+    <app-editor-pane
+      [selectedNote]="selectedNote"
+      [formatDate]="formatDate"
+      (updateTitle)="updateSelectedNoteTitle($event)"
+      (toggleFavorite)="toggleFavorite()"
+      (deleteNote)="deleteNote($event)"
+      (updateContent)="updateNoteContent($event)"
+    />
   </main>
 </div>
 
-@if (contextMenu.visible) {
-  <div
-    class="context-menu"
-    [style.left.px]="contextMenu.x"
-    [style.top.px]="contextMenu.y"
-    (click)="$event.stopPropagation()"
-  >
-    @if (contextMenu.targetType === 'app') {
-      <button type="button" (click)="handleContextAction('setBgStart')">Theme: Background start</button>
-      <button type="button" (click)="handleContextAction('setBgMid')">Theme: Background middle</button>
-      <button type="button" (click)="handleContextAction('setBgEnd')">Theme: Background end</button>
-      <button type="button" (click)="handleContextAction('setGlowOne')">Theme: Glow 1</button>
-      <button type="button" (click)="handleContextAction('setGlowTwo')">Theme: Glow 2</button>
-      <button type="button" (click)="handleContextAction('setPaneBg')">Theme: Pane background</button>
-      <button type="button" (click)="handleContextAction('setCardBg')">Theme: Card background</button>
-      <button type="button" (click)="handleContextAction('setBorder')">Theme: Border</button>
-      <button type="button" (click)="handleContextAction('setText')">Theme: Text</button>
-      <button type="button" (click)="handleContextAction('setMuted')">Theme: Muted text</button>
-      <button type="button" class="danger" (click)="handleContextAction('resetTheme')">Reset theme</button>
-    } @else {
-      <button type="button" (click)="handleContextAction('open')">Open</button>
-
-      @if (contextMenu.targetType === 'notebook') {
-        <button type="button" (click)="handleContextAction('addSection')">Add section</button>
-      }
-
-      @if (contextMenu.targetType === 'section') {
-        <button type="button" (click)="handleContextAction('addNote')">Add note</button>
-      }
-
-      <button type="button" (click)="handleContextAction('setColor')">Set color</button>
-      <button type="button" (click)="handleContextAction('rename')">Rename</button>
-      <button type="button" class="danger" (click)="handleContextAction('delete')">Delete</button>
-    }
-  </div>
-}
+<app-context-menu
+  [visible]="contextMenu.visible"
+  [x]="contextMenu.x"
+  [y]="contextMenu.y"
+  [targetType]="contextMenu.targetType"
+  (actionSelected)="handleContextAction($event)"
+/>

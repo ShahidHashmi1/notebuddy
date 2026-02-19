@@ -1,77 +1,25 @@
 import { CommonModule } from '@angular/common';
 import { Component, HostListener } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-
-interface Note {
-  id: string;
-  title: string;
-  content: string;
-  createdAt: string;
-  updatedAt: string;
-  favorite: boolean;
-  color: string;
-}
-
-interface Section {
-  id: string;
-  title: string;
-  color: string;
-  notes: Note[];
-}
-
-interface Notebook {
-  id: string;
-  title: string;
-  accent: string;
-  icon: string;
-  sections: Section[];
-}
-
-interface ThemeConfig {
-  bgStart: string;
-  bgMid: string;
-  bgEnd: string;
-  glowOne: string;
-  glowTwo: string;
-  paneBg: string;
-  cardBg: string;
-  border: string;
-  text: string;
-  muted: string;
-}
-
-interface AppState {
-  notebooks: Notebook[];
-  selectedNotebookId: string;
-  selectedSectionId: string;
-  selectedNoteId: string;
-  theme?: Partial<ThemeConfig>;
-}
-
-type ContextTarget = 'app' | 'notebook' | 'section' | 'note';
-type ContextAction =
-  | 'open'
-  | 'addSection'
-  | 'addNote'
-  | 'rename'
-  | 'delete'
-  | 'setColor'
-  | 'setBgStart'
-  | 'setBgMid'
-  | 'setBgEnd'
-  | 'setPaneBg'
-  | 'setCardBg'
-  | 'setBorder'
-  | 'setText'
-  | 'setMuted'
-  | 'setGlowOne'
-  | 'setGlowTwo'
-  | 'resetTheme';
+import { ContextMenuComponent } from './components/context-menu/context-menu.component';
+import { EditorPaneComponent } from './components/editor-pane/editor-pane.component';
+import { NotesPaneComponent } from './components/notes-pane/notes-pane.component';
+import { NotebooksPaneComponent } from './components/notebooks-pane/notebooks-pane.component';
+import { WorkspaceHeaderComponent } from './components/workspace-header/workspace-header.component';
+import { AppState, ContextAction, ContextTarget, Note, Notebook, Section, ThemeConfig } from './models/workspace.models';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    WorkspaceHeaderComponent,
+    NotebooksPaneComponent,
+    NotesPaneComponent,
+    EditorPaneComponent,
+    ContextMenuComponent
+  ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
@@ -480,10 +428,6 @@ export class AppComponent {
     }).format(new Date(dateIso));
   }
 
-  trackById(_: number, item: { id: string }): string {
-    return item.id;
-  }
-
   openContextMenu(event: MouseEvent, targetType: ContextTarget, targetId: string): void {
     event.preventDefault();
     event.stopPropagation();
@@ -745,7 +689,9 @@ export class AppComponent {
           id: this.id(),
           title: 'New Section',
           color: this.defaultSectionColor(0),
-          notes: [this.createNote('Fresh note', 'Start writing your thoughts, plans, or drafts here.', this.defaultSectionColor(0))]
+          notes: [
+            this.createNote('Fresh note', 'Start writing your thoughts, plans, or drafts here.', this.defaultSectionColor(0))
+          ]
         }
       ]
     };

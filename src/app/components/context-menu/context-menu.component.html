@@ -1,0 +1,31 @@
+@if (visible) {
+  <div class="context-menu" [style.left.px]="x" [style.top.px]="y" (click)="$event.stopPropagation()">
+    @if (targetType === 'app') {
+      <button type="button" (click)="actionSelected.emit('setBgStart')">Theme: Background start</button>
+      <button type="button" (click)="actionSelected.emit('setBgMid')">Theme: Background middle</button>
+      <button type="button" (click)="actionSelected.emit('setBgEnd')">Theme: Background end</button>
+      <button type="button" (click)="actionSelected.emit('setGlowOne')">Theme: Glow 1</button>
+      <button type="button" (click)="actionSelected.emit('setGlowTwo')">Theme: Glow 2</button>
+      <button type="button" (click)="actionSelected.emit('setPaneBg')">Theme: Pane background</button>
+      <button type="button" (click)="actionSelected.emit('setCardBg')">Theme: Card background</button>
+      <button type="button" (click)="actionSelected.emit('setBorder')">Theme: Border</button>
+      <button type="button" (click)="actionSelected.emit('setText')">Theme: Text</button>
+      <button type="button" (click)="actionSelected.emit('setMuted')">Theme: Muted text</button>
+      <button type="button" class="danger" (click)="actionSelected.emit('resetTheme')">Reset theme</button>
+    } @else {
+      <button type="button" (click)="actionSelected.emit('open')">Open</button>
+
+      @if (targetType === 'notebook') {
+        <button type="button" (click)="actionSelected.emit('addSection')">Add section</button>
+      }
+
+      @if (targetType === 'section') {
+        <button type="button" (click)="actionSelected.emit('addNote')">Add note</button>
+      }
+
+      <button type="button" (click)="actionSelected.emit('setColor')">Set color</button>
+      <button type="button" (click)="actionSelected.emit('rename')">Rename</button>
+      <button type="button" class="danger" (click)="actionSelected.emit('delete')">Delete</button>
+    }
+  </div>
+}

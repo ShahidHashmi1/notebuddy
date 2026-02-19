@@ -1,0 +1,31 @@
+<section class="pane editor-pane">
+  @if (selectedNote) {
+    <div class="editor-head" [style.border-left-color]="selectedNote.color">
+      <input
+        type="text"
+        [ngModel]="selectedNote.title"
+        (ngModelChange)="updateTitle.emit($event)"
+        placeholder="Untitled note"
+      />
+
+      <div class="editor-actions">
+        <button type="button" class="action ghost" (click)="toggleFavorite.emit()">
+          {{ selectedNote.favorite ? 'Unfavorite' : 'Favorite' }}
+        </button>
+        <button type="button" class="action danger" (click)="deleteNote.emit(selectedNote.id)">Delete</button>
+      </div>
+    </div>
+
+    <p class="note-meta">
+      Created {{ formatDate(selectedNote.createdAt) }} • Updated {{ formatDate(selectedNote.updatedAt) }}
+    </p>
+
+    <textarea
+      [ngModel]="selectedNote.content"
+      (ngModelChange)="updateContent.emit($event)"
+      placeholder="Capture thoughts, plans, meeting notes, journaling, or anything you want to remember..."
+    ></textarea>
+  } @else {
+    <div class="empty editor-empty">Select or create a note to start writing.</div>
+  }
+</section>

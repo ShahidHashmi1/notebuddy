@@ -1,0 +1,70 @@
+<section class="pane notes-pane">
+  <div class="pane-head">
+    <h2>{{ selectedNotebook?.title || 'Notebook' }}</h2>
+    <div class="action-row">
+      <button type="button" class="action" (click)="addSection.emit()">+ Section</button>
+      <button type="button" class="action" (click)="addNote.emit()">+ Note</button>
+    </div>
+  </div>
+
+  <div class="section-tabs">
+    @for (section of selectedNotebook?.sections ?? []; track trackSectionById($index, section)) {
+      <article
+        class="section-pill"
+        [class.active]="selectedSectionId === section.id"
+        [style.border-color]="selectedSectionId === section.id ? section.color : null"
+        [style.box-shadow]="selectedSectionId === section.id ? 'inset 0 0 0 1px ' + section.color + '33' : null"
+        (contextmenu)="sectionContextMenuRequested.emit({ event: $event, targetId: section.id })"
+      >
+        <div class="section-main" (click)="selectSection.emit(section.id)">
+          <span class="section-color-dot" [style.background]="section.color"></span>
+          {{ section.title }}
+        </div>
+        <div class="item-actions">
+          <button type="button" class="icon-btn" title="Rename section" (click)="renameSection.emit(section.id)">✎</button>
+          <button type="button" class="icon-btn danger" title="Delete section" (click)="deleteSection.emit(section.id)">🗑</button>
+        </div>
+      </article>
+    }
+  </div>
+
+  <label class="search">
+    <input
+      type="text"
+      placeholder="Search this section"
+      [ngModel]="searchTerm"
+      (ngModelChange)="searchTermChange.emit($event)"
+    />
+  </label>
+
+  <div class="note-list">
+    @for (note of filteredNotes; track trackNoteById($index, note)) {
+      <article
+        class="note-card"
+        [class.active]="selectedNoteId === note.id"
+        [style.border-left-color]="note.color"
+        (contextmenu)="noteContextMenuRequested.emit({ event: $event, targetId: note.id })"
+      >
+        <div class="item-main" (click)="selectNote.emit(note.id)">
+          <div class="note-card-head">
+            <strong>{{ note.title }}</strong>
+
+            @if (note.favorite) {
+              <span class="fav">★</span>
+            }
+          </div>
+
+          <p>{{ note.content || 'No content yet' }}</p>
+          <small>Edited {{ formatDate(note.updatedAt) }}</small>
+        </div>
+
+        <div class="item-actions">
+          <button type="button" class="icon-btn" title="Rename note" (click)="renameNote.emit(note.id)">✎</button>
+          <button type="button" class="icon-btn danger" title="Delete note" (click)="deleteNote.emit(note.id)">🗑</button>
+        </div>
+      </article>
+    } @empty {
+      <div class="empty">No notes match your search.</div>
+    }
+  </div>
+</section>
