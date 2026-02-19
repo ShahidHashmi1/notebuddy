@@ -9,11 +9,13 @@ interface Note {
   createdAt: string;
   updatedAt: string;
   favorite: boolean;
+  color: string;
 }
 
 interface Section {
   id: string;
   title: string;
+  color: string;
   notes: Note[];
 }
 
@@ -25,14 +27,46 @@ interface Notebook {
   sections: Section[];
 }
 
+interface ThemeConfig {
+  bgStart: string;
+  bgMid: string;
+  bgEnd: string;
+  glowOne: string;
+  glowTwo: string;
+  paneBg: string;
+  cardBg: string;
+  border: string;
+  text: string;
+  muted: string;
+}
+
 interface AppState {
   notebooks: Notebook[];
   selectedNotebookId: string;
   selectedSectionId: string;
   selectedNoteId: string;
+  theme?: Partial<ThemeConfig>;
 }
 
-type ContextTarget = 'notebook' | 'section' | 'note';
+type ContextTarget = 'app' | 'notebook' | 'section' | 'note';
+type ContextAction =
+  | 'open'
+  | 'addSection'
+  | 'addNote'
+  | 'rename'
+  | 'delete'
+  | 'setColor'
+  | 'setBgStart'
+  | 'setBgMid'
+  | 'setBgEnd'
+  | 'setPaneBg'
+  | 'setCardBg'
+  | 'setBorder'
+  | 'setText'
+  | 'setMuted'
+  | 'setGlowOne'
+  | 'setGlowTwo'
+  | 'resetTheme';
 
 @Component({
   selector: 'app-root',
@@ -43,6 +77,20 @@ type ContextTarget = 'notebook' | 'section' | 'note';
 })
 export class AppComponent {
   private readonly storageKey = 'notebuddy.personal.workspace.v1';
+  private readonly sectionColors = ['#4f95d9', '#3e85c4', '#5ba7e6', '#2f74b0', '#77b8ea', '#6a9fd3'];
+
+  readonly defaultTheme: ThemeConfig = {
+    bgStart: '#e6f2ff',
+    bgMid: '#d6e8fb',
+    bgEnd: '#c9def4',
+    glowOne: '#3e85c4',
+    glowTwo: '#4f95d9',
+    paneBg: '#ecf5ff',
+    cardBg: '#ffffff',
+    border: '#b6d2ee',
+    text: '#152c45',
+    muted: '#4f6f90'
+  };
 
   notebooks: Notebook[] = [];
 
@@ -50,16 +98,11 @@ export class AppComponent {
   selectedSectionId = '';
   selectedNoteId = '';
 
-  editingNotebookId = '';
-  editingSectionId = '';
-  editingNoteId = '';
-
-  notebookTitleDraft = '';
-  sectionTitleDraft = '';
-  noteTitleDraft = '';
-
   searchTerm = '';
   profileName = 'Shahid';
+
+  theme: ThemeConfig = { ...this.defaultTheme };
+
   contextMenu: {
     visible: boolean;
     x: number;
@@ -76,6 +119,21 @@ export class AppComponent {
 
   constructor() {
     this.bootstrap();
+  }
+
+  get themeVars(): Record<string, string> {
+    return {
+      '--bg-start': this.theme.bgStart,
+      '--bg-mid': this.theme.bgMid,
+      '--bg-end': this.theme.bgEnd,
+      '--glow-one': this.theme.glowOne,
+      '--glow-two': this.theme.glowTwo,
+      '--pane-bg': this.theme.paneBg,
+      '--card-bg': this.theme.cardBg,
+      '--border': this.theme.border,
+      '--ink': this.theme.text,
+      '--muted': this.theme.muted
+    };
   }
 
   get notebookCount(): number {
@@ -165,30 +223,19 @@ export class AppComponent {
     this.persist();
   }
 
-  startNotebookRename(notebookId: string): void {
+  setNotebookColor(notebookId: string): void {
     const notebook = this.notebooks.find((item) => item.id === notebookId);
     if (!notebook) {
       return;
     }
 
-    this.editingNotebookId = notebookId;
-    this.notebookTitleDraft = notebook.title;
-  }
-
-  saveNotebookRename(notebookId: string): void {
-    const notebook = this.notebooks.find((item) => item.id === notebookId);
-    if (!notebook) {
+    const value = this.askColor('Notebook color', notebook.accent);
+    if (!value) {
       return;
     }
 
-    notebook.title = this.notebookTitleDraft.trim() || 'Untitled notebook';
-    this.cancelNotebookRename();
+    notebook.accent = value;
     this.persist();
-  }
-
-  cancelNotebookRename(): void {
-    this.editingNotebookId = '';
-    this.notebookTitleDraft = '';
   }
 
   deleteNotebook(notebookId: string): void {
@@ -226,7 +273,8 @@ export class AppComponent {
     const section: Section = {
       id: this.id(),
       title: `Section ${notebook.sections.length + 1}`,
-      notes: [this.createNote('Untitled note', '')]
+      color: this.defaultSectionColor(notebook.sections.length),
+      notes: [this.createNote('Untitled note', '', this.defaultSectionColor(notebook.sections.length))]
     };
 
     notebook.sections.unshift(section);
@@ -253,30 +301,24 @@ export class AppComponent {
     this.persist();
   }
 
-  startSectionRename(sectionId: string): void {
+  setSectionColor(sectionId: string): void {
     const section = this.selectedNotebook?.sections.find((item) => item.id === sectionId);
     if (!section) {
       return;
     }
 
-    this.editingSectionId = sectionId;
-    this.sectionTitleDraft = section.title;
-  }
-
-  saveSectionRename(sectionId: string): void {
-    const section = this.selectedNotebook?.sections.find((item) => item.id === sectionId);
-    if (!section) {
+    const value = this.askColor('Section color', section.color);
+    if (!value) {
       return;
     }
 
-    section.title = this.sectionTitleDraft.trim() || 'Untitled section';
-    this.cancelSectionRename();
+    section.color = value;
+    section.notes.forEach((note) => {
+      if (!note.color) {
+        note.color = value;
+      }
+    });
     this.persist();
-  }
-
-  cancelSectionRename(): void {
-    this.editingSectionId = '';
-    this.sectionTitleDraft = '';
   }
 
   deleteSection(sectionId: string): void {
@@ -299,7 +341,8 @@ export class AppComponent {
         {
           id: this.id(),
           title: 'New Section',
-          notes: [this.createNote('Untitled note', '')]
+          color: this.defaultSectionColor(0),
+          notes: [this.createNote('Untitled note', '', this.defaultSectionColor(0))]
         }
       ];
       this.selectSection(notebook.sections[0].id);
@@ -322,7 +365,7 @@ export class AppComponent {
       return;
     }
 
-    const note = this.createNote('Untitled note', '');
+    const note = this.createNote('Untitled note', '', section.color);
     section.notes.unshift(note);
     this.selectNote(note.id);
   }
@@ -348,31 +391,20 @@ export class AppComponent {
     this.persist();
   }
 
-  startNoteRename(noteId: string): void {
+  setNoteColor(noteId: string): void {
     const note = this.selectedSection?.notes.find((item) => item.id === noteId);
     if (!note) {
       return;
     }
 
-    this.editingNoteId = noteId;
-    this.noteTitleDraft = note.title;
-  }
-
-  saveNoteRename(noteId: string): void {
-    const note = this.selectedSection?.notes.find((item) => item.id === noteId);
-    if (!note) {
+    const value = this.askColor('Note color', note.color || this.selectedSection?.color || this.defaultSectionColor(0));
+    if (!value) {
       return;
     }
 
-    note.title = this.noteTitleDraft.trim() || 'Untitled note';
+    note.color = value;
     note.updatedAt = new Date().toISOString();
-    this.cancelNoteRename();
     this.persist();
-  }
-
-  cancelNoteRename(): void {
-    this.editingNoteId = '';
-    this.noteTitleDraft = '';
   }
 
   toggleFavorite(): void {
@@ -424,7 +456,7 @@ export class AppComponent {
     }
 
     if (section.notes.length === 1) {
-      section.notes[0] = this.createNote('Untitled note', '');
+      section.notes[0] = this.createNote('Untitled note', '', section.color);
       this.selectNote(section.notes[0].id);
       return;
     }
@@ -454,6 +486,7 @@ export class AppComponent {
 
   openContextMenu(event: MouseEvent, targetType: ContextTarget, targetId: string): void {
     event.preventDefault();
+    event.stopPropagation();
 
     if (targetType === 'notebook') {
       this.selectedNotebookId = targetId;
@@ -474,8 +507,8 @@ export class AppComponent {
       this.persist();
     }
 
-    const menuWidth = 170;
-    const menuHeight = 180;
+    const menuWidth = 220;
+    const menuHeight = 300;
     const x = Math.min(event.clientX, window.innerWidth - menuWidth);
     const y = Math.min(event.clientY, window.innerHeight - menuHeight);
 
@@ -498,52 +531,40 @@ export class AppComponent {
     };
   }
 
-  handleContextAction(action: 'open' | 'addSection' | 'addNote' | 'rename' | 'delete'): void {
+  handleContextAction(action: ContextAction): void {
     const { targetType, targetId } = this.contextMenu;
+
+    if (targetType === 'app') {
+      this.applyThemeAction(action);
+      this.closeContextMenu();
+      return;
+    }
+
     if (!targetType || !targetId) {
       return;
     }
 
     if (targetType === 'notebook') {
-      if (action === 'open') {
-        this.selectNotebook(targetId);
-      }
-      if (action === 'addSection') {
-        this.addSectionToNotebook(targetId);
-      }
-      if (action === 'rename') {
-        this.renameNotebook(targetId);
-      }
-      if (action === 'delete') {
-        this.deleteNotebook(targetId);
-      }
+      if (action === 'open') this.selectNotebook(targetId);
+      if (action === 'addSection') this.addSectionToNotebook(targetId);
+      if (action === 'rename') this.renameNotebook(targetId);
+      if (action === 'setColor') this.setNotebookColor(targetId);
+      if (action === 'delete') this.deleteNotebook(targetId);
     }
 
     if (targetType === 'section') {
-      if (action === 'open') {
-        this.selectSection(targetId);
-      }
-      if (action === 'addNote') {
-        this.addNoteToSection(targetId);
-      }
-      if (action === 'rename') {
-        this.renameSection(targetId);
-      }
-      if (action === 'delete') {
-        this.deleteSection(targetId);
-      }
+      if (action === 'open') this.selectSection(targetId);
+      if (action === 'addNote') this.addNoteToSection(targetId);
+      if (action === 'rename') this.renameSection(targetId);
+      if (action === 'setColor') this.setSectionColor(targetId);
+      if (action === 'delete') this.deleteSection(targetId);
     }
 
     if (targetType === 'note') {
-      if (action === 'open') {
-        this.selectNote(targetId);
-      }
-      if (action === 'rename') {
-        this.renameNote(targetId);
-      }
-      if (action === 'delete') {
-        this.deleteNote(targetId);
-      }
+      if (action === 'open') this.selectNote(targetId);
+      if (action === 'rename') this.renameNote(targetId);
+      if (action === 'setColor') this.setNoteColor(targetId);
+      if (action === 'delete') this.deleteNote(targetId);
     }
 
     this.closeContextMenu();
@@ -559,6 +580,53 @@ export class AppComponent {
     this.closeContextMenu();
   }
 
+  private applyThemeAction(action: ContextAction): void {
+    if (action === 'setBgStart') this.updateThemeColor('bgStart', 'Background start', this.theme.bgStart);
+    if (action === 'setBgMid') this.updateThemeColor('bgMid', 'Background middle', this.theme.bgMid);
+    if (action === 'setBgEnd') this.updateThemeColor('bgEnd', 'Background end', this.theme.bgEnd);
+    if (action === 'setPaneBg') this.updateThemeColor('paneBg', 'Pane background', this.theme.paneBg);
+    if (action === 'setCardBg') this.updateThemeColor('cardBg', 'Card background', this.theme.cardBg);
+    if (action === 'setBorder') this.updateThemeColor('border', 'Border', this.theme.border);
+    if (action === 'setText') this.updateThemeColor('text', 'Main text', this.theme.text);
+    if (action === 'setMuted') this.updateThemeColor('muted', 'Muted text', this.theme.muted);
+    if (action === 'setGlowOne') this.updateThemeColor('glowOne', 'Glow color 1', this.theme.glowOne);
+    if (action === 'setGlowTwo') this.updateThemeColor('glowTwo', 'Glow color 2', this.theme.glowTwo);
+
+    if (action === 'resetTheme') {
+      this.theme = { ...this.defaultTheme };
+      this.persist();
+    }
+  }
+
+  private updateThemeColor(key: keyof ThemeConfig, label: string, current: string): void {
+    const value = this.askColor(label, current);
+    if (!value) {
+      return;
+    }
+
+    this.theme[key] = value;
+    this.persist();
+  }
+
+  private askColor(label: string, current: string): string | null {
+    const value = prompt(`${label} color (hex or CSS color)`, current);
+    if (value === null) {
+      return null;
+    }
+
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return null;
+    }
+
+    if (typeof CSS !== 'undefined' && typeof CSS.supports === 'function' && !CSS.supports('color', trimmed)) {
+      alert('Invalid color value. Try hex like #4f95d9 or a valid CSS color.');
+      return null;
+    }
+
+    return trimmed;
+  }
+
   private bootstrap(): void {
     const raw = localStorage.getItem(this.storageKey);
     if (raw) {
@@ -569,7 +637,9 @@ export class AppComponent {
           this.selectedNotebookId = parsed.selectedNotebookId;
           this.selectedSectionId = parsed.selectedSectionId;
           this.selectedNoteId = parsed.selectedNoteId;
+          this.theme = { ...this.defaultTheme, ...(parsed.theme ?? {}) };
           this.ensureSelection();
+          this.persist();
           return;
         }
       } catch {
@@ -581,6 +651,7 @@ export class AppComponent {
     this.selectedNotebookId = this.notebooks[0].id;
     this.selectedSectionId = this.notebooks[0].sections[0].id;
     this.selectedNoteId = this.notebooks[0].sections[0].notes[0].id;
+    this.theme = { ...this.defaultTheme };
     this.persist();
   }
 
@@ -594,6 +665,20 @@ export class AppComponent {
       return;
     }
 
+    this.notebooks.forEach((notebook) => {
+      notebook.sections.forEach((section, index) => {
+        if (!section.color) {
+          section.color = this.defaultSectionColor(index);
+        }
+
+        section.notes.forEach((note) => {
+          if (!note.color) {
+            note.color = section.color;
+          }
+        });
+      });
+    });
+
     const notebook = this.notebooks.find((item) => item.id === this.selectedNotebookId) ?? this.notebooks[0];
     this.selectedNotebookId = notebook.id;
 
@@ -602,7 +687,8 @@ export class AppComponent {
         {
           id: this.id(),
           title: 'New Section',
-          notes: [this.createNote('Untitled note', '')]
+          color: this.defaultSectionColor(0),
+          notes: [this.createNote('Untitled note', '', this.defaultSectionColor(0))]
         }
       ];
     }
@@ -611,7 +697,7 @@ export class AppComponent {
     this.selectedSectionId = section.id;
 
     if (!section.notes.length) {
-      section.notes = [this.createNote('Untitled note', '')];
+      section.notes = [this.createNote('Untitled note', '', section.color)];
     }
 
     const note = section.notes.find((item) => item.id === this.selectedNoteId) ?? section.notes[0];
@@ -623,13 +709,14 @@ export class AppComponent {
       notebooks: this.notebooks,
       selectedNotebookId: this.selectedNotebookId,
       selectedSectionId: this.selectedSectionId,
-      selectedNoteId: this.selectedNoteId
+      selectedNoteId: this.selectedNoteId,
+      theme: this.theme
     };
 
     localStorage.setItem(this.storageKey, JSON.stringify(state));
   }
 
-  private createNote(title: string, content: string): Note {
+  private createNote(title: string, content: string, color: string): Note {
     const now = new Date().toISOString();
 
     return {
@@ -638,12 +725,13 @@ export class AppComponent {
       content,
       createdAt: now,
       updatedAt: now,
-      favorite: false
+      favorite: false,
+      color
     };
   }
 
   private createNotebook(title: string): Notebook {
-    const accents = ['var(--accent-olive)', 'var(--accent-coral)', 'var(--accent-teal)', 'var(--accent-amber)'];
+    const accents = ['#68a7df', '#4f95d9', '#2f74b0', '#3e85c4'];
     const icons = ['journal', 'leaf', 'spark', 'north'];
     const index = this.notebooks.length;
 
@@ -656,7 +744,8 @@ export class AppComponent {
         {
           id: this.id(),
           title: 'New Section',
-          notes: [this.createNote('Fresh note', 'Start writing your thoughts, plans, or drafts here.')]
+          color: this.defaultSectionColor(0),
+          notes: [this.createNote('Fresh note', 'Start writing your thoughts, plans, or drafts here.', this.defaultSectionColor(0))]
         }
       ]
     };
@@ -673,30 +762,35 @@ export class AppComponent {
       {
         id: this.id(),
         title: 'Personal OS',
-        accent: 'var(--accent-coral)',
+        accent: '#4f95d9',
         icon: 'journal',
         sections: [
           {
             id: this.id(),
             title: 'Daily',
+            color: this.defaultSectionColor(0),
             notes: [
               this.createNote(
                 'Morning intention',
-                'Top 3 outcomes for today:\n1. Ship one meaningful feature\n2. Exercise for 30 minutes\n3. Finish one personal admin task'
+                'Top 3 outcomes for today:\n1. Ship one meaningful feature\n2. Exercise for 30 minutes\n3. Finish one personal admin task',
+                this.defaultSectionColor(0)
               ),
               this.createNote(
                 'Wins archive',
-                '- Wrapped up onboarding flow\n- Had a great deep-work session\n- Cleared inbox to zero'
+                '- Wrapped up onboarding flow\n- Had a great deep-work session\n- Cleared inbox to zero',
+                this.defaultSectionColor(0)
               )
             ]
           },
           {
             id: this.id(),
             title: 'Ideas',
+            color: this.defaultSectionColor(1),
             notes: [
               this.createNote(
                 'Side project spark',
-                'A lightweight note exporter that converts selected notes into a weekly digest PDF.'
+                'A lightweight note exporter that converts selected notes into a weekly digest PDF.',
+                this.defaultSectionColor(1)
               )
             ]
           }
@@ -705,21 +799,27 @@ export class AppComponent {
       {
         id: this.id(),
         title: 'Work Deep Dives',
-        accent: 'var(--accent-teal)',
+        accent: '#2f74b0',
         icon: 'spark',
         sections: [
           {
             id: this.id(),
             title: 'Planning',
+            color: this.defaultSectionColor(2),
             notes: [
               this.createNote(
                 'Q1 focus map',
-                'Theme: reduce context switching.\n- Merge duplicate meetings\n- Batch review windows\n- Track deep work hours weekly'
+                'Theme: reduce context switching.\n- Merge duplicate meetings\n- Batch review windows\n- Track deep work hours weekly',
+                this.defaultSectionColor(2)
               )
             ]
           }
         ]
       }
     ];
+  }
+
+  private defaultSectionColor(index: number): string {
+    return this.sectionColors[index % this.sectionColors.length];
   }
 }
