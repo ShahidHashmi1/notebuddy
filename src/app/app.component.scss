@@ -1,19 +1,19 @@
 :host {
-  --bg-main: #f4f1ea;
-  --bg-soft: #fbf9f4;
-  --ink: #1e2a29;
-  --muted: #697573;
-  --border: #d8d2c7;
-  --accent-teal: #2f7f79;
-  --accent-coral: #cb6b45;
-  --accent-olive: #6d7c36;
-  --accent-amber: #ba8746;
+  --bg-main: #dcecff;
+  --bg-soft: #ebf4ff;
+  --ink: #152c45;
+  --muted: #4f6f90;
+  --border: #b6d2ee;
+  --accent-teal: #2f74b0;
+  --accent-coral: #4f95d9;
+  --accent-olive: #68a7df;
+  --accent-amber: #3e85c4;
 
   display: block;
   min-height: 100vh;
   color: var(--ink);
   font-family: 'Avenir Next', 'Segoe UI', sans-serif;
-  background: radial-gradient(circle at 15% 10%, #f5efe2 0%, #ede7de 45%, #e3ddd3 100%);
+  background: radial-gradient(circle at 15% 10%, #e6f2ff 0%, #d6e8fb 45%, #c9def4 100%);
 }
 
 .canvas {
@@ -21,8 +21,8 @@
   inset: 0;
   pointer-events: none;
   background-image:
-    radial-gradient(circle at 85% 15%, rgb(47 127 121 / 20%), transparent 40%),
-    radial-gradient(circle at 5% 80%, rgb(203 107 69 / 20%), transparent 35%);
+    radial-gradient(circle at 85% 15%, rgb(62 133 196 / 22%), transparent 40%),
+    radial-gradient(circle at 5% 80%, rgb(79 149 217 / 20%), transparent 35%);
 }
 
 .workspace {
@@ -62,7 +62,7 @@ h1 {
   border: 1px solid var(--border);
   border-radius: 0.8rem;
   padding: 0.55rem 0.7rem;
-  background: rgb(255 255 255 / 62%);
+  background: rgb(255 255 255 / 70%);
   backdrop-filter: blur(6px);
 }
 
@@ -86,7 +86,7 @@ h1 {
 
 .pane {
   border: 1px solid var(--border);
-  background: rgb(251 249 244 / 76%);
+  background: rgb(236 245 255 / 86%);
   backdrop-filter: blur(8px);
   border-radius: 1rem;
   padding: 0.9rem;
@@ -212,8 +212,8 @@ h2 {
 .notebook-item.active,
 .note-card.active,
 .section-pill.active {
-  border-color: #88bdb8;
-  box-shadow: inset 0 0 0 1px rgb(47 127 121 / 25%);
+  border-color: #6ca4d2;
+  box-shadow: inset 0 0 0 1px rgb(47 116 176 / 30%);
 }
 
 .section-tabs {
@@ -284,7 +284,7 @@ textarea {
 .note-card p {
   margin: 0.4rem 0 0.5rem;
   font-size: 0.76rem;
-  color: #44514e;
+  color: #3c5d7f;
   line-height: 1.35;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -294,7 +294,7 @@ textarea {
 }
 
 .fav {
-  color: #ba8746;
+  color: #3e85c4;
 }
 
 .editor-pane {
@@ -370,7 +370,7 @@ textarea {
 }
 
 .context-menu button:hover {
-  background: #f2eee6;
+  background: #e0ecfb;
 }
 
 .context-menu button.danger {

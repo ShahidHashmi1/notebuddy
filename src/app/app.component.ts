@@ -150,6 +150,21 @@ export class AppComponent {
     this.selectNotebook(notebook.id);
   }
 
+  renameNotebook(notebookId: string): void {
+    const notebook = this.notebooks.find((item) => item.id === notebookId);
+    if (!notebook) {
+      return;
+    }
+
+    const nextTitle = prompt('Rename notebook', notebook.title);
+    if (nextTitle === null) {
+      return;
+    }
+
+    notebook.title = nextTitle.trim() || 'Untitled notebook';
+    this.persist();
+  }
+
   startNotebookRename(notebookId: string): void {
     const notebook = this.notebooks.find((item) => item.id === notebookId);
     if (!notebook) {
@@ -221,6 +236,21 @@ export class AppComponent {
   addSectionToNotebook(notebookId: string): void {
     this.selectNotebook(notebookId);
     this.addSection();
+  }
+
+  renameSection(sectionId: string): void {
+    const section = this.selectedNotebook?.sections.find((item) => item.id === sectionId);
+    if (!section) {
+      return;
+    }
+
+    const nextTitle = prompt('Rename section', section.title);
+    if (nextTitle === null) {
+      return;
+    }
+
+    section.title = nextTitle.trim() || 'Untitled section';
+    this.persist();
   }
 
   startSectionRename(sectionId: string): void {
@@ -300,6 +330,22 @@ export class AppComponent {
   addNoteToSection(sectionId: string): void {
     this.selectSection(sectionId);
     this.addNote();
+  }
+
+  renameNote(noteId: string): void {
+    const note = this.selectedSection?.notes.find((item) => item.id === noteId);
+    if (!note) {
+      return;
+    }
+
+    const nextTitle = prompt('Rename note', note.title);
+    if (nextTitle === null) {
+      return;
+    }
+
+    note.title = nextTitle.trim() || 'Untitled note';
+    note.updatedAt = new Date().toISOString();
+    this.persist();
   }
 
   startNoteRename(noteId: string): void {
@@ -466,7 +512,7 @@ export class AppComponent {
         this.addSectionToNotebook(targetId);
       }
       if (action === 'rename') {
-        this.startNotebookRename(targetId);
+        this.renameNotebook(targetId);
       }
       if (action === 'delete') {
         this.deleteNotebook(targetId);
@@ -481,7 +527,7 @@ export class AppComponent {
         this.addNoteToSection(targetId);
       }
       if (action === 'rename') {
-        this.startSectionRename(targetId);
+        this.renameSection(targetId);
       }
       if (action === 'delete') {
         this.deleteSection(targetId);
@@ -493,7 +539,7 @@ export class AppComponent {
         this.selectNote(targetId);
       }
       if (action === 'rename') {
-        this.startNoteRename(targetId);
+        this.renameNote(targetId);
       }
       if (action === 'delete') {
         this.deleteNote(targetId);

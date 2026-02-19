@@ -37,28 +37,17 @@
             [class.active]="selectedNotebookId === notebook.id"
             (contextmenu)="openContextMenu($event, 'notebook', notebook.id)"
           >
-            <button type="button" class="item-main" (click)="selectNotebook(notebook.id)">
+            <div class="item-main" (click)="selectNotebook(notebook.id)">
               <span class="dot" [style.background]="notebook.accent"></span>
 
-              @if (editingNotebookId === notebook.id) {
-                <input
-                  type="text"
-                  class="inline-title"
-                  [(ngModel)]="notebookTitleDraft"
-                  (keydown.enter)="saveNotebookRename(notebook.id)"
-                  (keydown.escape)="cancelNotebookRename()"
-                  (blur)="saveNotebookRename(notebook.id)"
-                />
-              } @else {
-                <span>
-                  <strong>{{ notebook.title }}</strong>
-                  <small>{{ notebook.sections.length }} sections</small>
-                </span>
-              }
-            </button>
+              <span>
+                <strong>{{ notebook.title }}</strong>
+                <small>{{ notebook.sections.length }} sections</small>
+              </span>
+            </div>
 
             <div class="item-actions">
-              <button type="button" class="icon-btn" title="Rename notebook" (click)="startNotebookRename(notebook.id)">
+              <button type="button" class="icon-btn" title="Rename notebook" (click)="renameNotebook(notebook.id)">
                 ✎
               </button>
               <button type="button" class="icon-btn danger" title="Delete notebook" (click)="deleteNotebook(notebook.id)">
@@ -86,22 +75,11 @@
             [class.active]="selectedSectionId === section.id"
             (contextmenu)="openContextMenu($event, 'section', section.id)"
           >
-            <button type="button" class="section-main" (click)="selectSection(section.id)">
-              @if (editingSectionId === section.id) {
-                <input
-                  type="text"
-                  class="inline-title"
-                  [(ngModel)]="sectionTitleDraft"
-                  (keydown.enter)="saveSectionRename(section.id)"
-                  (keydown.escape)="cancelSectionRename()"
-                  (blur)="saveSectionRename(section.id)"
-                />
-              } @else {
-                {{ section.title }}
-              }
-            </button>
+            <div class="section-main" (click)="selectSection(section.id)">
+              {{ section.title }}
+            </div>
             <div class="item-actions">
-              <button type="button" class="icon-btn" title="Rename section" (click)="startSectionRename(section.id)">✎</button>
+              <button type="button" class="icon-btn" title="Rename section" (click)="renameSection(section.id)">✎</button>
               <button type="button" class="icon-btn danger" title="Delete section" (click)="deleteSection(section.id)">🗑</button>
             </div>
           </article>
@@ -119,20 +97,9 @@
             [class.active]="selectedNoteId === note.id"
             (contextmenu)="openContextMenu($event, 'note', note.id)"
           >
-            <button type="button" class="item-main" (click)="selectNote(note.id)">
+            <div class="item-main" (click)="selectNote(note.id)">
               <div class="note-card-head">
-                @if (editingNoteId === note.id) {
-                  <input
-                    type="text"
-                    class="inline-title"
-                    [(ngModel)]="noteTitleDraft"
-                    (keydown.enter)="saveNoteRename(note.id)"
-                    (keydown.escape)="cancelNoteRename()"
-                    (blur)="saveNoteRename(note.id)"
-                  />
-                } @else {
-                  <strong>{{ note.title }}</strong>
-                }
+                <strong>{{ note.title }}</strong>
 
                 @if (note.favorite) {
                   <span class="fav">★</span>
@@ -141,10 +108,10 @@
 
               <p>{{ note.content || 'No content yet' }}</p>
               <small>Edited {{ formatDate(note.updatedAt) }}</small>
-            </button>
+            </div>
 
             <div class="item-actions">
-              <button type="button" class="icon-btn" title="Rename note" (click)="startNoteRename(note.id)">✎</button>
+              <button type="button" class="icon-btn" title="Rename note" (click)="renameNote(note.id)">✎</button>
               <button type="button" class="icon-btn danger" title="Delete note" (click)="deleteNote(note.id)">🗑</button>
             </div>
           </article>
