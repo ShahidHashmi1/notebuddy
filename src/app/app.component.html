@@ -1,0 +1,211 @@
+<div class="canvas"></div>
+
+<div class="workspace">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">Personal workspace</p>
+      <h1>{{ profileName }}'s NoteBuddy</h1>
+    </div>
+
+    <div class="stats">
+      <div>
+        <span>{{ notebookCount }}</span>
+        <small>Notebooks</small>
+      </div>
+      <div>
+        <span>{{ sectionCount }}</span>
+        <small>Sections</small>
+      </div>
+      <div>
+        <span>{{ totalNotes }}</span>
+        <small>Notes</small>
+      </div>
+    </div>
+  </header>
+
+  <main class="pane-grid">
+    <aside class="pane notebooks-pane">
+      <div class="pane-head">
+        <h2>Notebooks</h2>
+        <button type="button" class="action ghost" (click)="addNotebook()">+ New</button>
+      </div>
+
+      <div class="notebook-list">
+        @for (notebook of notebooks; track trackById($index, notebook)) {
+          <article
+            class="notebook-item"
+            [class.active]="selectedNotebookId === notebook.id"
+            (contextmenu)="openContextMenu($event, 'notebook', notebook.id)"
+          >
+            <button type="button" class="item-main" (click)="selectNotebook(notebook.id)">
+              <span class="dot" [style.background]="notebook.accent"></span>
+
+              @if (editingNotebookId === notebook.id) {
+                <input
+                  type="text"
+                  class="inline-title"
+                  [(ngModel)]="notebookTitleDraft"
+                  (keydown.enter)="saveNotebookRename(notebook.id)"
+                  (keydown.escape)="cancelNotebookRename()"
+                  (blur)="saveNotebookRename(notebook.id)"
+                />
+              } @else {
+                <span>
+                  <strong>{{ notebook.title }}</strong>
+                  <small>{{ notebook.sections.length }} sections</small>
+                </span>
+              }
+            </button>
+
+            <div class="item-actions">
+              <button type="button" class="icon-btn" title="Rename notebook" (click)="startNotebookRename(notebook.id)">
+                ✎
+              </button>
+              <button type="button" class="icon-btn danger" title="Delete notebook" (click)="deleteNotebook(notebook.id)">
+                🗑
+              </button>
+            </div>
+          </article>
+        }
+      </div>
+    </aside>
+
+    <section class="pane notes-pane">
+      <div class="pane-head">
+        <h2>{{ selectedNotebook?.title || 'Notebook' }}</h2>
+        <div class="action-row">
+          <button type="button" class="action" (click)="addSection()">+ Section</button>
+          <button type="button" class="action" (click)="addNote()">+ Note</button>
+        </div>
+      </div>
+
+      <div class="section-tabs">
+        @for (section of selectedNotebook?.sections ?? []; track trackById($index, section)) {
+          <article
+            class="section-pill"
+            [class.active]="selectedSectionId === section.id"
+            (contextmenu)="openContextMenu($event, 'section', section.id)"
+          >
+            <button type="button" class="section-main" (click)="selectSection(section.id)">
+              @if (editingSectionId === section.id) {
+                <input
+                  type="text"
+                  class="inline-title"
+                  [(ngModel)]="sectionTitleDraft"
+                  (keydown.enter)="saveSectionRename(section.id)"
+                  (keydown.escape)="cancelSectionRename()"
+                  (blur)="saveSectionRename(section.id)"
+                />
+              } @else {
+                {{ section.title }}
+              }
+            </button>
+            <div class="item-actions">
+              <button type="button" class="icon-btn" title="Rename section" (click)="startSectionRename(section.id)">✎</button>
+              <button type="button" class="icon-btn danger" title="Delete section" (click)="deleteSection(section.id)">🗑</button>
+            </div>
+          </article>
+        }
+      </div>
+
+      <label class="search">
+        <input type="text" placeholder="Search this section" [(ngModel)]="searchTerm" />
+      </label>
+
+      <div class="note-list">
+        @for (note of filteredNotes; track trackById($index, note)) {
+          <article
+            class="note-card"
+            [class.active]="selectedNoteId === note.id"
+            (contextmenu)="openContextMenu($event, 'note', note.id)"
+          >
+            <button type="button" class="item-main" (click)="selectNote(note.id)">
+              <div class="note-card-head">
+                @if (editingNoteId === note.id) {
+                  <input
+                    type="text"
+                    class="inline-title"
+                    [(ngModel)]="noteTitleDraft"
+                    (keydown.enter)="saveNoteRename(note.id)"
+                    (keydown.escape)="cancelNoteRename()"
+                    (blur)="saveNoteRename(note.id)"
+                  />
+                } @else {
+                  <strong>{{ note.title }}</strong>
+                }
+
+                @if (note.favorite) {
+                  <span class="fav">★</span>
+                }
+              </div>
+
+              <p>{{ note.content || 'No content yet' }}</p>
+              <small>Edited {{ formatDate(note.updatedAt) }}</small>
+            </button>
+
+            <div class="item-actions">
+              <button type="button" class="icon-btn" title="Rename note" (click)="startNoteRename(note.id)">✎</button>
+              <button type="button" class="icon-btn danger" title="Delete note" (click)="deleteNote(note.id)">🗑</button>
+            </div>
+          </article>
+        } @empty {
+          <div class="empty">No notes match your search.</div>
+        }
+      </div>
+    </section>
+
+    <section class="pane editor-pane">
+      @if (selectedNote) {
+        <div class="editor-head">
+          <input
+            type="text"
+            [ngModel]="selectedNote.title"
+            (ngModelChange)="updateSelectedNoteTitle($event)"
+            placeholder="Untitled note"
+          />
+
+          <div class="editor-actions">
+            <button type="button" class="action ghost" (click)="toggleFavorite()">
+              {{ selectedNote.favorite ? 'Unfavorite' : 'Favorite' }}
+            </button>
+            <button type="button" class="action danger" (click)="deleteNote(selectedNote.id)">Delete</button>
+          </div>
+        </div>
+
+        <p class="note-meta">
+          Created {{ formatDate(selectedNote.createdAt) }} • Updated {{ formatDate(selectedNote.updatedAt) }}
+        </p>
+
+        <textarea
+          [ngModel]="selectedNote.content"
+          (ngModelChange)="updateNoteContent($event)"
+          placeholder="Capture thoughts, plans, meeting notes, journaling, or anything you want to remember..."
+        ></textarea>
+      } @else {
+        <div class="empty editor-empty">Select or create a note to start writing.</div>
+      }
+    </section>
+  </main>
+</div>
+
+@if (contextMenu.visible) {
+  <div
+    class="context-menu"
+    [style.left.px]="contextMenu.x"
+    [style.top.px]="contextMenu.y"
+    (click)="$event.stopPropagation()"
+  >
+    <button type="button" (click)="handleContextAction('open')">Open</button>
+
+    @if (contextMenu.targetType === 'notebook') {
+      <button type="button" (click)="handleContextAction('addSection')">Add section</button>
+    }
+
+    @if (contextMenu.targetType === 'section') {
+      <button type="button" (click)="handleContextAction('addNote')">Add note</button>
+    }
+
+    <button type="button" (click)="handleContextAction('rename')">Rename</button>
+    <button type="button" class="danger" (click)="handleContextAction('delete')">Delete</button>
+  </div>
+}
